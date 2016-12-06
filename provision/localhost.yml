@@ -1,0 +1,88 @@
+- hosts: default
+  become: yes
+  tasks:
+    - name: Install
+      yum: name=libselinux-python
+    - name: disabled selinux
+      selinux: state=disabled
+    - name: upgrade all packages
+      yum: name=* state=latest
+    - name: install zsh
+      yum: name=zsh
+    - name: install wget
+      yum: name=wget
+    - name : install jdk
+      shell: '(cd /tmp && wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u102-b14/jdk-8u102-linux-x64.rpm")'
+    - name: install JDK 8
+      yum: name=/tmp/jdk-8u102-linux-x64.rpm state=present
+    - name: yum group-install
+      yum: name="{{ item }}" state=present
+      with_items:
+        - "@Development Tools"
+    - name: check dotfiles
+      shell: test -d /home/vagrant/dotfiles
+      register: dotfiles_result
+      ignore_errors: true
+    - name: clone dotfiles
+      git:
+        repo: https://github.com/azusa/dotfiles.git
+        dest: /home/vagrant/dotfiles
+      become: vagrant
+      when: dotfiles_result|failed
+    - name: link dotfiles
+      file: src=/home/vagrant/dotfiles/.zshrc dest=/home/vagrant/.zshrc state=link
+    - name: link dotfiles
+      file: src=/home/vagrant/dotfiles/.vimrc dest=/home/vagrant/.vimrc state=link
+    - name: yum install for rbenv
+      yum: name="{{ item }}" state=present
+      with_items:
+        - openssl-devel
+        - zlib-devel
+        - readline-devel
+        - libffi-devel
+        - git
+    - name: check rbenv
+      shell: grep rbenv /home/vagrant/.zshrc
+      become: vagrant
+      register: rbenv_result
+      ignore_errors: true
+    - name: install rbenv
+      shell: |
+        git clone https://github.com/sstephenson/rbenv.git /home/vagrant/.rbenv
+        git clone https://github.com/sstephenson/ruby-build.git /home/vagrant/.rbenv/plugins/ruby-build
+        echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> /home/vagrant/.zshrc
+        echo 'eval "$(rbenv init -)"' >> /home/vagrant/.zshrc
+      become: vagrant
+      when: rbenv_result|failed
+    - name: check nodebrew
+      shell: grep nodebrew /home/vagrant/.zshrc
+      become: vagrant
+      register: nodebrew_result
+      ignore_errors: true
+    - name: install nodebrew
+      shell: |
+        curl -L git.io/nodebrew | perl - setup
+        echo 'export PATH=$HOME/.nodebrew/current/bin:$PATH' >> /home/vagrant/.zshrc
+      become: vagrant
+      when: nodebrew_result|failed
+    - user:
+        name: vagrant
+        shell: /usr/bin/zsh
+    - name: clone vim
+      git:
+        repo: https://github.com/vim/vim.git
+        dest: /tmp/vim
+    - name: check vim
+      shell: test -f /usr/local/bin/vim
+      register: vim_result
+      ignore_errors: true
+    - name: install vim
+      shell: |
+        cd /tmp/vim/src
+        ./configure --prefix=/usr/local
+        make
+        make install
+      when: vim_result|failed
+    - name: link vi
+      file: src=/usr/local/bin/vim dest=/usr/local/bin/vi state=link
+
