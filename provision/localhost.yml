@@ -23,6 +23,16 @@
       shell: test -d /home/vagrant/dotfiles
       register: dotfiles_result
       ignore_errors: true
+    - name: check .vim/bundle
+      shell: test -d /home/vagrant/.vim/bundle
+      register: bundle_result
+      ignore_errors: true
+    - name: clone bundle
+      git:
+        repo: http://github.com/gmarik/vundle.git
+        dest: //home/vagrant/.vim/bundle/vundle
+      become: vagrant
+      when: bundle_result|failed
     - name: clone dotfiles
       git:
         repo: https://github.com/azusa/dotfiles.git
