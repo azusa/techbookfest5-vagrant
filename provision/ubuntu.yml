@@ -1,20 +1,23 @@
-- hosts: centos
+- hosts: ubuntu
   become: yes
   tasks:
-    - name: Install
-      yum: name=libselinux-python
-    - name: disabled selinux
-      selinux: state=disabled
+    - name: "FIX: Ubuntu 16.04 LTS doesn't come with certain modules, required by ansible"
+      raw: apt-get install python-minimal aptitude -y
+      become: true
+      become_user: root
+      become_method: sudo
+    - name: apt update
+      apt: update_cache=yes    
     - name: upgrade all packages
-      yum: name=* state=latest
+      apt: upgrade=full
     - name: install zsh
-      yum: name=zsh
+      apt: name=zsh
     - name: install wget
-      yum: name=wget
-    - name: yum group-install
-      yum: name="{{ item }}" state=present
-      with_items:
-        - "@Development Tools"
+      apt: name=wget
+    - name: install build-essential
+      apt: name=build-essential
+    - name: install git
+      apt: name=git
     - name: check dotfiles
       shell: test -d /home/vagrant/dotfiles
       register: dotfiles_result
@@ -39,14 +42,10 @@
       file: src=/home/vagrant/dotfiles/.zshrc dest=/home/vagrant/.zshrc state=link
     - name: link dotfiles
       file: src=/home/vagrant/dotfiles/.vimrc dest=/home/vagrant/.vimrc state=link
-    - name: yum install for rbenv
-      yum: name="{{ item }}" state=present
+    - name: apt install for rbenv
+      apt: name="{{ item }}" state=present
       with_items:
-        - openssl-devel
-        - zlib-devel
-        - readline-devel
-        - libffi-devel
-        - git
+        - ruby-build
     - name: check rbenv
       shell: grep rbenv /home/vagrant/.zshrc
       become: vagrant
