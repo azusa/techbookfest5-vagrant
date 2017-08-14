@@ -1,4 +1,4 @@
-- hosts: default
+- hosts: centos
   become: yes
   tasks:
     - name: Install
@@ -11,10 +11,6 @@
       yum: name=zsh
     - name: install wget
       yum: name=wget
-    - name : install jdk
-      shell: '(cd /tmp && wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u102-b14/jdk-8u102-linux-x64.rpm")'
-    - name: install JDK 8
-      yum: name=/tmp/jdk-8u102-linux-x64.rpm state=present
     - name: yum group-install
       yum: name="{{ item }}" state=present
       with_items:

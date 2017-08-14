@@ -26,13 +26,31 @@ Vagrant.configure("2") do |config|
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # config.vm.network "forwarded_port", guest: 80, host: 8080
 
-  config.vm.network "forwarded_port", guest: 4000, host: 4000
-  config.vm.network "forwarded_port", guest: 3001, host: 3001
-  config.vm.network "forwarded_port", guest: 3000, host: 3000
+  #config.vm.network "forwarded_port", guest: 4000, host: 4000
+  #config.vm.network "forwarded_port", guest: 3001, host: 3001
+  #onfig.vm.network "forwarded_port", guest: 3000, host: 3000
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.34.2"
 
+  config.vm.define :centos , primary: true do |centos|
+    centos.vm.network "private_network", ip: "192.168.34.2"
+    centos.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "provision/localhost.yml"
+      ansible.verbose = true
+      ansible.install = true
+    end
+  end   
+
+  config.vm.define :ubuntu , primary: true do |ubuntu|
+    ubuntu.vm.network "private_network", ip: "192.168.34.3"
+    ubuntu.vm.box = "ubuntu16"
+    ubuntu.vm.box_url = "http://sakura.fieldnotes.jp/images/ubuntu.box"
+    ubuntu.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "provision/ubuntu.yml"
+      ansible.verbose = true
+      ansible.install = true
+    end
+  end   
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
@@ -73,11 +91,6 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
-  config.vm.provision "ansible_local" do |ansible|
-    ansible.playbook = "provision/localhost.yml"
-    ansible.verbose = true
-    ansible.install = true
-  end
 
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--cpus", "2", "--ioapic", "on"]
