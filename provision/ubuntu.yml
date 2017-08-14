@@ -40,8 +40,10 @@
       when: dotfiles_result|failed
     - name: link dotfiles
       file: src=/home/azusa/dotfiles/.zshrc dest=/home/azusa/.zshrc state=link
+      become: azusa
     - name: link dotfiles
       file: src=/home/azusa/dotfiles/.vimrc dest=/home/azusa/.vimrc state=link
+      become: azusa
     - name: apt install for rbenv
       apt: name="{{ item }}" state=present
       with_items:
