@@ -49,7 +49,7 @@
       with_items:
         - ruby-build
     - name: check rbenv
-      shell: grep rbenv /home/azusa/.zshrc
+      shell: grep rbenv /home/azusa/.zshlocal
       become: azusa
       register: rbenv_result
       ignore_errors: true
@@ -58,18 +58,18 @@
         git clone https://github.com/sstephenson/rbenv.git /home/azusa/.rbenv
         git clone https://github.com/sstephenson/ruby-build.git /home/azusa/.rbenv/plugins/ruby-build
         echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> /home/azusa/.zshrc
-        echo 'eval "$(rbenv init -)"' >> /home/azusa/.zshrc
+        echo 'eval "$(rbenv init -)"' >> /home/azusa/.zshlocal
       become: azusa
       when: rbenv_result|failed
     - name: check nodebrew
-      shell: grep nodebrew /home/azusa/.zshrc
+      shell: grep nodebrew /home/azusa/.zshlocal
       become: azusa
       register: nodebrew_result
       ignore_errors: true
     - name: install nodebrew
       shell: |
         curl -L git.io/nodebrew | perl - setup
-        echo 'export PATH=$HOME/.nodebrew/current/bin:$PATH' >> /home/azusa/.zshrc
+        echo 'export PATH=$HOME/.nodebrew/current/bin:$PATH' >> /home/azusa/.zshlocal
       become: azusa
       when: nodebrew_result|failed
     - user:
