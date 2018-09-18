@@ -1,4 +1,4 @@
-- hosts: centos
+- hosts: default
   become: yes
   tasks:
     - name: Install

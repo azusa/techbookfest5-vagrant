@@ -12,9 +12,9 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "centos7"
+  config.vm.box = "centos7-7.5.1804-1"
 
-  config.vm.box_url = "http://sakura.fieldnotes.jp/images/centos7.box"
+  config.vm.box_url = "http://manage.fieldnotes.jp/images/centos7-7.5.1804-1.box"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -34,23 +34,39 @@ Vagrant.configure("2") do |config|
 
   config.vm.define :centos , primary: true do |centos|
     centos.vm.network "private_network", ip: "192.168.34.2"
-    centos.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "provision/localhost.yml"
-      ansible.verbose = true
-      ansible.install = true
-    end
+    centos.vm.provision :shell, :path => "provisioning-vagrant.sh"
+    #centos.vm.provision "ansible_local" do |ansible|
+    #  ansible.playbook = "provision/localhost.yml"
+    #  ansible.verbose = true
+    #  ansible.install = true
+    #end
   end   
 
-  config.vm.define :ubuntu , primary: true do |ubuntu|
-    ubuntu.vm.network "private_network", ip: "192.168.34.3"
-    ubuntu.vm.box = "ubuntu16"
-    ubuntu.vm.box_url = "http://sakura.fieldnotes.jp/images/ubuntu.box"
-    ubuntu.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "provision/ubuntu.yml"
-      ansible.verbose = true
-      ansible.install = true
+  config.vm.define :remote , autostart: false do |remote|
+    remote.vm.box = "dummy"
+    remote.vm.provider :aws do |aws, override|
+      aws.access_key_id = ENV['AWS_ACCESS_KEY_ID']
+      aws.secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
+      aws.region = 'ap-northeast-1'
+      aws.instance_type = 't2.small'
+      aws.ami = 'ami-8e8847f1'
+      security_group = ENV['security_group']
+      aws.security_groups = [security_group]
+      aws.keypair_name = ENV['keypair_name']
+      aws.ssh_host_attribute = :public_ip_address
+      aws.associate_public_ip = true
+      aws.subnet_id = ENV['subnet_id']
+      # https://github.com/mitchellh/vagrant/issues/5401
+      override.nfs.functional = false
+      override.vm.box_url="https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+      override.ssh.username = 'centos'
+      override.ssh.private_key_path = ENV['private_key_path']
+      override.vm.synced_folder ".", "/vagrant" , type: "rsync"
+      override.vm.provision :shell, :path => "provisioning-vagrant.sh"  
+      aws.tags = { 'Name' => 'CI' }
     end
-  end   
+  end
+
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
