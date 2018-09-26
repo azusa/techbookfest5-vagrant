@@ -35,11 +35,6 @@ Vagrant.configure("2") do |config|
   config.vm.define :centos , primary: true do |centos|
     centos.vm.network "private_network", ip: "192.168.34.2"
     centos.vm.provision :shell, :path => "provisioning-vagrant.sh"
-    #centos.vm.provision "ansible_local" do |ansible|
-    #  ansible.playbook = "provision/localhost.yml"
-    #  ansible.verbose = true
-    #  ansible.install = true
-    #end
   end   
 
   config.vm.define :remote , autostart: false do |remote|
@@ -56,8 +51,6 @@ Vagrant.configure("2") do |config|
       aws.ssh_host_attribute = :public_ip_address
       aws.associate_public_ip = true
       aws.subnet_id = ENV['subnet_id']
-      # https://github.com/mitchellh/vagrant/issues/5401
-      override.nfs.functional = false
       override.vm.box_url="https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
       override.ssh.username = 'centos'
       override.ssh.private_key_path = ENV['private_key_path']
